@@ -21,6 +21,7 @@ import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
+
 public class ClientInterface extends JFrame {
 
 	private static final long serialVersionUID = 1L;
@@ -68,7 +69,8 @@ public class ClientInterface extends JFrame {
 	   JMenuItem item = new JMenuItem("Open DB");
 	   class OpenDBListener implements ActionListener
 	      {
-	         public void actionPerformed(ActionEvent event)
+	         @Override
+			 public void actionPerformed(ActionEvent event)
 	         {
 	 			int returnVal = jFileChooser.showOpenDialog(getParent());
 				if (returnVal == JFileChooser.APPROVE_OPTION) {
@@ -98,6 +100,7 @@ public class ClientInterface extends JFrame {
    
 	class SendButtonListener implements ActionListener {
 
+		@Override
 		public void actionPerformed(ActionEvent e) {
 
 	        try {
