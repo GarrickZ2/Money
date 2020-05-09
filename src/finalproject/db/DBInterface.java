@@ -12,7 +12,8 @@ public class DBInterface {
 	 */
 	
 	Connection conn;
-	
+	String url;
+
 	public DBInterface() {
 		
 	}
@@ -23,6 +24,17 @@ public class DBInterface {
 	
 	public void setConnection() throws SQLException {
 		//this.conn =
+		try{
+			this.conn = DriverManager.getConnection(url);
+			System.out.println("secceed");
+		}catch (SQLException e) {
+			System.out.println("failed");
+			System.out.println(e.getMessage());
+		}
+
+
 	}
-	
+
+
+
 }
