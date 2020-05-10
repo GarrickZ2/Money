@@ -1,6 +1,8 @@
 package finalproject.client;
 
 import java.awt.*;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.sql.*;
 import java.util.Arrays;
@@ -42,6 +44,9 @@ public class ClientInterface extends JFrame {
 	Socket socket;
 	int port;
 
+	BufferedReader bReader;
+	ObjectOutputStream os;
+
 
 	//GUI Component
 	JPanel main;
@@ -62,7 +67,7 @@ public class ClientInterface extends JFrame {
 	}
 	
 	public ClientInterface(int port) {
-		jFileChooser = new JFileChooser();
+		jFileChooser = new JFileChooser("./");
 		this.port = port;
 		JMenu menu = createFileMenu();
 		JMenuBar br = new JMenuBar();
@@ -94,13 +99,41 @@ public class ClientInterface extends JFrame {
 
 		JPanel panel3 = new JPanel(new FlowLayout());
 		open = new JButton("Open Connection");
+		open.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				try {
+					InetAddress addr = InetAddress.getByName(null);
+					socket = new Socket(addr, port);
+					bReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+					os = new ObjectOutputStream(socket.getOutputStream());
+				} catch (UnknownHostException unknownHostException) {
+					unknownHostException.printStackTrace();
+				} catch (IOException ioException) {
+					ioException.printStackTrace();
+				}
+
+			}
+		});
 		close = new JButton("Close Connection");
+		close.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+
+				try {
+					socket.close();
+				} catch (IOException ioException) {
+					ioException.printStackTrace();
+				}
+			}
+		});
 		panel3.add(open);
 		panel3.add(close);
 		up.add(panel3);
 
 		JPanel panel4 = new JPanel(new FlowLayout());
 		send = new JButton("Send Data");
+		send.addActionListener(new SendButtonListener());
 		query = new JButton("Query DB Data");
 		query.addActionListener(new QueryListener());
 		panel4.add(send);
@@ -122,6 +155,7 @@ public class ClientInterface extends JFrame {
 		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
 		this.setSize(500, 800);
 		this.setVisible(true);
+
 
 	}
 	
@@ -156,6 +190,10 @@ public class ClientInterface extends JFrame {
    private void fillComboBox() throws SQLException {
 	   
 	   ArrayList<ComboBoxItem> l = getNames();
+	   if(l.size() == 0){
+	   	clearCombBox();
+	   	return;
+	   }
 	   for(ComboBoxItem item: l){
 	   	peopleSelect.addItem(item);
 	   }
@@ -192,41 +230,31 @@ public class ClientInterface extends JFrame {
 		public void actionPerformed(ActionEvent e) {
 
 	        try {
-				
-	        	// responses are going to come over the input as text, and that's tricky,
-	        	// which is why I've done that for you:
-				BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-				
+
 				// now, get the person on the object dropdownbox we've selected
 				ComboBoxItem personEntry = (ComboBoxItem)peopleSelect.getSelectedItem();
-				
-				// That's tricky which is why I have included the code. the personEntry
-				// contains an ID and a name. You want to get a "Person" object out of that
-				// which is stored in the database
-				
-				// Send the person object here over an output stream that you got from the socket.
-				ObjectOutputStream os = new ObjectOutputStream(socket.getOutputStream());
+
 				Person person = clientDB.selectByID(personEntry.getId()+"");
 				os.writeObject(person);
-				os.flush();
+//				os.flush();
 
-				String response = br.readLine();
+				String response = bReader.readLine();
 				if (response.contains("Success")) {
 					System.out.println("Success");
+					clientDB.updateSend("" + personEntry.getId(), "1");
+					peopleSelect.removeAllItems();
+					fillComboBox();
 					// what do you do after we know that the server has successfully
 					// received the data and written it to its own database?
 					// you will have to write the code for that.
 				} else {
 					System.out.println("Failed");
 				}
-			} catch (IOException e1) {
+			} catch (IOException | SQLException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
-//			} catch (SQLException e1) {
-//				// TODO Auto-generated catch block
-//				e1.printStackTrace();
-//			}
+
 	        
 			
 		}
@@ -301,4 +329,5 @@ public class ClientInterface extends JFrame {
 	public static void main(String[] args) {
 		ClientInterface ci = new ClientInterface();
 	}
+
 }

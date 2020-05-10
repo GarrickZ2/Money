@@ -3,13 +3,11 @@ package finalproject.server;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -40,6 +38,11 @@ public class Server extends JFrame implements Runnable {
 	private static final int FRAME_HEIGHT = 800;
 	final int AREA_ROWS = 10;
 	final int AREA_COLUMNS = 40;
+	private Socket socket;
+	private ObjectInputStream in;
+	private PrintWriter out;
+	private int port;
+
 	ClientDB clientDB;
 
 	//GUI Component
@@ -62,6 +65,7 @@ public class Server extends JFrame implements Runnable {
 	public Server(int port, String dbFile) throws IOException, SQLException {
 		clientDB = new ClientDB(dbFile);
 		//set menu
+		this.port = port;
 		JMenuBar br = new JMenuBar();
 		JMenu menu = createFileMenu();
 		br.add(menu);
@@ -97,7 +101,7 @@ public class Server extends JFrame implements Runnable {
 
 		//down zone
 		down = new JPanel(new BorderLayout());
-		area = new JTextArea("Listening on port " + port + "\n");
+		area = new JTextArea("");
 		area.setEditable(false);
 		down.add(area);
 
@@ -110,6 +114,9 @@ public class Server extends JFrame implements Runnable {
 		this.setSize(500, 800);
 		this.setSize(Server.FRAME_WIDTH, Server.FRAME_HEIGHT);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+		Thread t = new Thread(this);
+		t.start();
 	}
 
 	public JMenu createFileMenu()
@@ -144,6 +151,30 @@ public class Server extends JFrame implements Runnable {
 	@Override
 	public void run() {
 		// TODO Auto-generated method stub
-		
+		try {
+			ServerSocket s = new ServerSocket(port);
+			while (true) {
+				String con = area.getText();
+				area.setText(con + "\nListening on port " + port + "\n");
+				socket = s.accept();
+				try {
+					con = area.getText();
+					area.setText(con + "Connecting Successfully\n");
+					in =new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
+					out = new PrintWriter(new BufferedWriter(
+							new OutputStreamWriter(socket.getOutputStream())
+					), true);
+					while (true) {
+						Person person = (Person)in.readObject();
+						out.println("Success");
+						clientDB.insertPerson(person);
+					}
+				}catch (Exception e){
+					con = area.getText();
+					area.setText(con + "\nClosing Connection" + "\n");
+					socket.close();
+				}
+			}
+		}catch (IOException ignored){}
 	}
 }

@@ -106,4 +106,11 @@ public class ClientDB extends DBInterface{
         }
     }
 
+    public void reset(){
+        ArrayList<Person> persons = selectAll();
+        for(Person each: persons){
+            updateSend(each.getId(), "0");
+        }
+    }
+
 }

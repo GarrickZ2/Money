@@ -8,10 +8,7 @@ import java.util.ArrayList;
 public class Test {
     public static void main(String[] args) throws SQLException {
         ClientDB clientDB = new ClientDB("client.db");
-        clientDB.setConnection();
-        clientDB.updateSend("1","1");
-        Person person = new Person("jia","tianrui",10,"beijing","12",0);
-        clientDB.insertPerson(person);
+        clientDB.reset();
 
     }
 }
