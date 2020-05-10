@@ -13,6 +13,7 @@ import java.net.Socket;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Date;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -24,6 +25,8 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+
+import finalproject.db.ClientDB;
 import finalproject.db.DBInterface;
 import finalproject.entities.Person;
 
@@ -37,7 +40,7 @@ public class Server extends JFrame implements Runnable {
 	private static final int FRAME_HEIGHT = 800;
 	final int AREA_ROWS = 10;
 	final int AREA_COLUMNS = 40;
-
+	ClientDB clientDB;
 
 	//GUI Component
 	JPanel up;
@@ -57,6 +60,7 @@ public class Server extends JFrame implements Runnable {
 	}
 
 	public Server(int port, String dbFile) throws IOException, SQLException {
+		clientDB = new ClientDB(dbFile);
 		//set menu
 		JMenuBar br = new JMenuBar();
 		JMenu menu = createFileMenu();
@@ -73,6 +77,21 @@ public class Server extends JFrame implements Runnable {
 
 		JPanel panel2 = new JPanel(new FlowLayout());
 		query = new JButton("Query DB");
+		query.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String original = area.getText();
+				ArrayList<Person> persons = clientDB.selectAll();
+				String head = "first\tlast\tage\tcity\tsend\tid\n";
+				String spe = "-----\t-----\t-----\t-----\t-----\t-----\n";
+				String content = "";
+				for(Person each:persons){
+					content = content + each.getFirstName() + "\t" + each.getLastName() + "\t" + each.getAge() + "\t"
+							+ each.getCity() + "\t" + each.getSent() + "\t" + each.getId() + "\n";
+				}
+				area.setText(original + head + spe + content);
+			}
+		});
 		panel2.add(query);
 		up.add(panel2);
 

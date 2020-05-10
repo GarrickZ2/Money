@@ -8,6 +8,7 @@ import java.util.List;
 import javax.swing.*;
 
 import finalproject.client.ClientInterface.ComboBoxItem;
+import finalproject.db.ClientDB;
 import finalproject.db.DBInterface;
 import finalproject.entities.Person;
 
@@ -35,7 +36,8 @@ public class ClientInterface extends JFrame {
 	final int AREA_ROWS = 10;
 	final int AREA_COLUMNS = 40;
 
-	JComboBox peopleSelect;
+	ClientDB clientDB;
+	JComboBox<ComboBoxItem> peopleSelect;
 	JFileChooser jFileChooser;
 	Socket socket;
 	int port;
@@ -60,6 +62,7 @@ public class ClientInterface extends JFrame {
 	}
 	
 	public ClientInterface(int port) {
+		jFileChooser = new JFileChooser();
 		this.port = port;
 		JMenu menu = createFileMenu();
 		JMenuBar br = new JMenuBar();
@@ -83,7 +86,7 @@ public class ClientInterface extends JFrame {
 		up.add(panel2);
 
 		JPanel jPanel5 = new JPanel(new FlowLayout());
-		peopleSelect = new JComboBox();
+		peopleSelect = new JComboBox<>();
 		ComboBoxItem none = new ComboBoxItem(-1, "<Empty>");
 		peopleSelect.addItem(none);
 		jPanel5.add(peopleSelect);
@@ -99,6 +102,7 @@ public class ClientInterface extends JFrame {
 		JPanel panel4 = new JPanel(new FlowLayout());
 		send = new JButton("Send Data");
 		query = new JButton("Query DB Data");
+		query.addActionListener(new QueryListener());
 		panel4.add(send);
 		panel4.add(query);
 		up.add(panel4);
@@ -121,7 +125,25 @@ public class ClientInterface extends JFrame {
 
 	}
 	
+	class QueryListener implements ActionListener{
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			printInfo();
+		}
+	}
 
+	private void printInfo(){
+		area.setText("");
+		ArrayList<Person> persons = clientDB.selectAll();
+		String head = "first\tlast\tage\tcity\tsend\tid\n";
+		String spe = "-----\t-----\t-----\t-----\t-----\t-----\n";
+		String content = "";
+		for(Person each:persons){
+			content = content + each.getFirstName() + "\t" + each.getLastName() + "\t" + each.getAge() + "\t"
+					+ each.getCity() + "\t" + each.getSent() + "\t" + each.getId() + "\n";
+		}
+		area.setText(head + spe + content);
+	}
    public JMenu createFileMenu()
    {
       JMenu menu = new JMenu("File");
@@ -133,11 +155,18 @@ public class ClientInterface extends JFrame {
    
    private void fillComboBox() throws SQLException {
 	   
-	   List<ComboBoxItem> l = getNames();
-	   peopleSelect.setModel(new DefaultComboBoxModel(l.toArray()));
-		
-	   
+	   ArrayList<ComboBoxItem> l = getNames();
+	   for(ComboBoxItem item: l){
+	   	peopleSelect.addItem(item);
+	   }
    }
+
+   private void clearCombBox(){
+		peopleSelect.removeAllItems();
+		ComboBoxItem none = new ComboBoxItem(-1, "<Empty>");
+		peopleSelect.addItem(none);
+   }
+
    private JMenuItem createFileExitItem() {
 		JMenuItem item = new JMenuItem("Exit");
 		item.addActionListener(new ActionListener() {
@@ -148,36 +177,12 @@ public class ClientInterface extends JFrame {
 		});
 		return item;
    }
-   private JMenuItem createFileOpenItem() {
+
+
+	private JMenuItem createFileOpenItem() {
 	   JMenuItem item = new JMenuItem("Open DB");
-//	   class OpenDBListener implements ActionListener
-//	      {
-//	         @Override
-//			 public void actionPerformed(ActionEvent event)
-//	         {
-//	 			int returnVal = jFileChooser.showOpenDialog(getParent());
-//				if (returnVal == JFileChooser.APPROVE_OPTION) {
-//					System.out.println("You chose to open this file: " + jFileChooser.getSelectedFile().getAbsolutePath());
-//					String dbFileName = jFileChooser.getSelectedFile().getAbsolutePath();
-//					try {
-//						connectToDB(dbFileName);
-//						dbName.setText(dbFileName.substring(dbFileName.lastIndexOf("/")+1));
-//						queryButtonListener.setConnection(conn);
-//						//clearComboBox();
-//						fillComboBox();
-//
-//					} catch (Exception e ) {
-//						System.err.println("error connection to db: "+ e.getMessage());
-//						e.printStackTrace();
-//						dbName.setText("<None>");
-//						clearComboBox();
-//					}
-//
-//				}
-//	         }
-//	      }
-//
-//	   item.addActionListener(new OpenDBListener());
+
+	   item.addActionListener(new OpenDBListener());
 	   return item;
    }
    
@@ -224,9 +229,17 @@ public class ClientInterface extends JFrame {
 		
 	}
 	
-   private List<ComboBoxItem> getNames() throws SQLException {
-	   
-	   return null;
+	private ArrayList<ComboBoxItem> getNames() throws SQLException {
+		ArrayList<Person> peoples = clientDB.selectAll();
+		ArrayList<ComboBoxItem> items = new ArrayList<>();
+		for(Person each : peoples){
+			if(each.getSent() == 0) {
+				ComboBoxItem item = new ComboBoxItem(Integer.parseInt(each.getId()),
+						each.getFirstName() + " " + each.getLastName());
+				items.add(item);
+			}
+	   	}
+	   return items;
    }
 	
 	// a JComboBox will take a bunch of objects and use the "toString()" method
@@ -259,31 +272,28 @@ public class ClientInterface extends JFrame {
 	}
 	
 	/* the "open db" menu item in the client should use this ActionListener */
-	   class OpenDBListener implements ActionListener
-	      {
-	         @Override
-			 public void actionPerformed(ActionEvent event)
-	         {
-	 			int returnVal = jFileChooser.showOpenDialog(getParent());
-				if (returnVal == JFileChooser.APPROVE_OPTION) {
-					System.out.println("You chose to open this file: " + jFileChooser.getSelectedFile().getAbsolutePath());
-					String dbFileName = jFileChooser.getSelectedFile().getAbsolutePath();
-					try {
-						/* now that you have the dbFileName, you should probably connect to the DB */
-						/* maybe think about filling the contents of the dropdown box listing names 
-						 * and indicating the name of the Active DB
-						 */
-						
-					} catch (Exception e ) {
-						System.err.println("error connection to db: "+ e.getMessage());
-						e.printStackTrace();
-
-					}
-					
+	class OpenDBListener implements ActionListener
+	  {
+		 @Override
+		 public void actionPerformed(ActionEvent event)
+		 {
+			int returnVal = jFileChooser.showOpenDialog(getParent());
+			if (returnVal == JFileChooser.APPROVE_OPTION) {
+				System.out.println("You chose to open this file: " + jFileChooser.getSelectedFile().getAbsolutePath());
+				String dbFileName = jFileChooser.getSelectedFile().getAbsolutePath();
+				try {
+					clientDB = new ClientDB(dbFileName);
+					peopleSelect.removeAllItems();
+					fillComboBox();
+				} catch (Exception e ) {
+					System.err.println("error connection to db: "+ e.getMessage());
+					clearCombBox();
+					e.printStackTrace();
 				}
-	         }
-	      }
-	
+			}
+		 }
+	  }
+
 	public static void main(String[] args) {
 		ClientInterface ci = new ClientInterface();
 	}

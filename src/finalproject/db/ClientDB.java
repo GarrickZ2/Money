@@ -10,10 +10,13 @@ import java.util.ArrayList;
 
 public class ClientDB extends DBInterface{
 
-    public ClientDB(){
-        this.url = "jdbc:sqlite:client.db";
+    public ClientDB(String path) throws SQLException{
+        this.url = "jdbc:sqlite:" + path;
+        setConnection();
+        System.out.println(url);
     }
 
+    @Override
     public void setConnection() throws SQLException {
         //this.conn =
         try{
