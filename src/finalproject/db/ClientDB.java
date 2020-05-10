@@ -53,6 +53,29 @@ public class ClientDB extends DBInterface{
         return results;
     }
 
+    public Person selectByID(String id) {
+        String sql = "SELECT * FROM People where id ="+id;
+        Person person=null;
+        try {
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(sql);
+
+            // loop through the result set
+
+            person = new Person(
+                    rs.getString("first"),
+                    rs.getString("last"),
+                    rs.getInt("age"),
+                    rs.getString("city"), rs.getInt("id")+"",
+                    rs.getBoolean("sent")?1:0);
+
+
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+        return person;
+    }
+
 
     public void updateSend(String id,String afterStatus){
 

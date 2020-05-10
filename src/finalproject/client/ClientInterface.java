@@ -205,7 +205,11 @@ public class ClientInterface extends JFrame {
 				// which is stored in the database
 				
 				// Send the person object here over an output stream that you got from the socket.
-				
+				ObjectOutputStream os = new ObjectOutputStream(socket.getOutputStream());
+				Person person = clientDB.selectByID(personEntry.getId()+"");
+				os.writeObject(person);
+				os.flush();
+
 				String response = br.readLine();
 				if (response.contains("Success")) {
 					System.out.println("Success");
