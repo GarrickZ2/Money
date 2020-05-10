@@ -53,4 +53,21 @@ public class ClientDB extends DBInterface{
         return results;
     }
 
+
+    public void updateSend(String id,String afterStatus){
+
+        String sql = "UPDATE People SET sent=" +afterStatus+ " WHERE id="+id;
+
+        try {
+
+            Statement stmt = conn.createStatement();
+            stmt.executeQuery(sql);
+
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+
+
+    }
+
 }
