@@ -4,28 +4,21 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.UnknownHostException;
-import java.sql.Connection;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Date;
 import javax.swing.JButton;
-import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
-import finalproject.db.ClientDB;
-import finalproject.db.DBInterface;
+import finalproject.db.DataBase;
 import finalproject.entities.Person;
 
 /**
@@ -43,7 +36,7 @@ public class Server extends JFrame implements Runnable {
 	private PrintWriter out;
 	private int port;
 
-	ClientDB clientDB;
+	DataBase dataBase;
 
 	//GUI Component
 	JPanel up;
@@ -63,7 +56,7 @@ public class Server extends JFrame implements Runnable {
 	}
 
 	public Server(int port, String dbFile) throws IOException, SQLException {
-		clientDB = new ClientDB(dbFile);
+		dataBase = new DataBase(dbFile);
 		//set menu
 		this.port = port;
 		JMenuBar br = new JMenuBar();
@@ -85,8 +78,8 @@ public class Server extends JFrame implements Runnable {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				String original = area.getText();
-				ArrayList<Person> persons = clientDB.selectAll();
-				String head = "first\tlast\tage\tcity\tsend\tid\n";
+				ArrayList<Person> persons = dataBase.selectAll();
+				String head = "DB Results:\nfirst\tlast\tage\tcity\tsend\tid\n";
 				String spe = "-----\t-----\t-----\t-----\t-----\t-----\n";
 				String content = "";
 				for(Person each:persons){
@@ -111,7 +104,7 @@ public class Server extends JFrame implements Runnable {
 
 		this.add(main);
 		this.setTitle("Server");
-		this.setSize(500, 800);
+		this.setSize(FRAME_WIDTH, FRAME_HEIGHT);
 		this.setSize(Server.FRAME_WIDTH, Server.FRAME_HEIGHT);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -155,19 +148,23 @@ public class Server extends JFrame implements Runnable {
 			ServerSocket s = new ServerSocket(port);
 			while (true) {
 				String con = area.getText();
-				area.setText(con + "\nListening on port " + port + "\n");
+				area.setText(con + "Listening on port " + port + "\n");
 				socket = s.accept();
 				try {
 					con = area.getText();
-					area.setText(con + "Connecting Successfully\n");
+					con = con + "Starting thread for Client 1 at " + new Date() + "\n";
+					area.setText(con + "Listening for input from client 1\n");
 					in =new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
 					out = new PrintWriter(new BufferedWriter(
 							new OutputStreamWriter(socket.getOutputStream())
 					), true);
 					while (true) {
 						Person person = (Person)in.readObject();
+						con = area.getText();
+						con = con + "got person" + person.toString() + "\nInserted Successfully\n";
+						area.setText(con);
 						out.println("Success");
-						clientDB.insertPerson(person);
+						dataBase.insertPerson(person);
 					}
 				}catch (Exception e){
 					con = area.getText();

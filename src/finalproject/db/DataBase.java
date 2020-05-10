@@ -8,9 +8,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 
-public class ClientDB extends DBInterface{
+public class DataBase extends DBInterface{
 
-    public ClientDB(String path) throws SQLException{
+    public DataBase(String path) throws SQLException{
         this.url = "jdbc:sqlite:" + path;
         setConnection();
         System.out.println(url);
@@ -106,10 +106,20 @@ public class ClientDB extends DBInterface{
         }
     }
 
-    public void reset(){
+    public void resetClient(){
         ArrayList<Person> persons = selectAll();
         for(Person each: persons){
             updateSend(each.getId(), "0");
+        }
+    }
+
+    public void resetServer(){
+        String sql = "DELETE FROM People";
+        try {
+            Statement stmt = conn.createStatement();
+            stmt.executeQuery(sql);
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
         }
     }
 

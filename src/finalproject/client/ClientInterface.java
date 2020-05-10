@@ -5,19 +5,14 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.sql.*;
-import java.util.Arrays;
-import java.util.List;
 import javax.swing.*;
 
-import finalproject.client.ClientInterface.ComboBoxItem;
-import finalproject.db.ClientDB;
-import finalproject.db.DBInterface;
+import finalproject.db.DataBase;
 import finalproject.entities.Person;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
@@ -38,7 +33,7 @@ public class ClientInterface extends JFrame {
 	final int AREA_ROWS = 10;
 	final int AREA_COLUMNS = 40;
 
-	ClientDB clientDB;
+	DataBase dataBase;
 	JComboBox<ComboBoxItem> peopleSelect;
 	JFileChooser jFileChooser;
 	Socket socket;
@@ -107,6 +102,7 @@ public class ClientInterface extends JFrame {
 					socket = new Socket(addr, port);
 					bReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 					os = new ObjectOutputStream(socket.getOutputStream());
+					connName.setText(addr.getHostName() + ":" + port);
 				} catch (UnknownHostException unknownHostException) {
 					unknownHostException.printStackTrace();
 				} catch (IOException ioException) {
@@ -125,6 +121,7 @@ public class ClientInterface extends JFrame {
 				} catch (IOException ioException) {
 					ioException.printStackTrace();
 				}
+				connName.setText("<None>");
 			}
 		});
 		panel3.add(open);
@@ -153,7 +150,7 @@ public class ClientInterface extends JFrame {
 		this.add(main);
 		this.setTitle("Client");
 		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
-		this.setSize(500, 800);
+		this.setSize(FRAME_WIDTH, FRAME_HEIGHT);
 		this.setVisible(true);
 
 
@@ -168,7 +165,7 @@ public class ClientInterface extends JFrame {
 
 	private void printInfo(){
 		area.setText("");
-		ArrayList<Person> persons = clientDB.selectAll();
+		ArrayList<Person> persons = dataBase.selectAll();
 		String head = "first\tlast\tage\tcity\tsend\tid\n";
 		String spe = "-----\t-----\t-----\t-----\t-----\t-----\n";
 		String content = "";
@@ -234,14 +231,14 @@ public class ClientInterface extends JFrame {
 				// now, get the person on the object dropdownbox we've selected
 				ComboBoxItem personEntry = (ComboBoxItem)peopleSelect.getSelectedItem();
 
-				Person person = clientDB.selectByID(personEntry.getId()+"");
+				Person person = dataBase.selectByID(personEntry.getId()+"");
 				os.writeObject(person);
 //				os.flush();
 
 				String response = bReader.readLine();
 				if (response.contains("Success")) {
 					System.out.println("Success");
-					clientDB.updateSend("" + personEntry.getId(), "1");
+					dataBase.updateSend("" + personEntry.getId(), "1");
 					peopleSelect.removeAllItems();
 					fillComboBox();
 					// what do you do after we know that the server has successfully
@@ -262,7 +259,7 @@ public class ClientInterface extends JFrame {
 	}
 	
 	private ArrayList<ComboBoxItem> getNames() throws SQLException {
-		ArrayList<Person> peoples = clientDB.selectAll();
+		ArrayList<Person> peoples = dataBase.selectAll();
 		ArrayList<ComboBoxItem> items = new ArrayList<>();
 		for(Person each : peoples){
 			if(each.getSent() == 0) {
@@ -313,8 +310,9 @@ public class ClientInterface extends JFrame {
 			if (returnVal == JFileChooser.APPROVE_OPTION) {
 				System.out.println("You chose to open this file: " + jFileChooser.getSelectedFile().getAbsolutePath());
 				String dbFileName = jFileChooser.getSelectedFile().getAbsolutePath();
+				dbName.setText(dbFileName);
 				try {
-					clientDB = new ClientDB(dbFileName);
+					dataBase = new DataBase(dbFileName);
 					peopleSelect.removeAllItems();
 					fillComboBox();
 				} catch (Exception e ) {
