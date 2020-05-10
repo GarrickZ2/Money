@@ -93,4 +93,17 @@ public class ClientDB extends DBInterface{
 
     }
 
+    public void insertPerson(Person person){
+        String sql = "INSERT INTO People (first,last,age,city,sent,id) VALUES (\""+person.getFirstName()+"\",\""+person.getLastName()+"\","+person.getAge()+",\""+person.getCity()+"\","+person.getSent()+","+person.getId()+")";
+
+        try {
+
+            Statement stmt = conn.createStatement();
+            stmt.executeQuery(sql);
+
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
 }
